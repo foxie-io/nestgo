@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"example/chi/adapter"
 	"net/http"
 
@@ -27,15 +26,7 @@ func (c *HelloController) GetHello() ng.Route {
 
 func main() {
 	app := ng.NewApp(
-		ng.WithResponseHandler(func(ctx context.Context, info *ng.ResponseInfo) error {
-			w := ng.MustLoad[http.ResponseWriter](ctx)
-			if info.HttpResponse != nil {
-				w.WriteHeader(info.HttpResponse.StatusCode())
-				return json.NewEncoder(w).Encode(info.HttpResponse.Response())
-			}
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return nil
-		}),
+		ng.WithResponseHandler(adapter.ChiResponseHandler),
 	)
 
 	app.AddController(&HelloController{})
