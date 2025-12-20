@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"example/fiber/adapter"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
@@ -24,13 +25,7 @@ func (c *HelloController) GetHello() ng.Route {
 
 func main() {
 	app := ng.NewApp(
-		ng.WithResponseHandler(func(ctx context.Context, info *ng.ResponseInfo) error {
-			fctx := ng.MustLoad[*fiber.Ctx](ctx)
-			if info.HttpResponse != nil {
-				return fctx.Status(info.HttpResponse.StatusCode()).JSON(info.HttpResponse.Response())
-			}
-			return fctx.Status(500).SendString("Internal Server Error")
-		}),
+		ng.WithResponseHandler(adapter.FiberResponseHandler),
 	)
 
 	app.AddController(&HelloController{})
@@ -38,14 +33,8 @@ func main() {
 	app.Build()
 
 	fiberApp := fiber.New()
-	for _, route := range app.Routes() {
-		fiberApp.Add(route.Method(), route.Path(), func(c *fiber.Ctx) error {
-			ngCtx := ng.NewContext()
-			ctx := ng.WithContext(c.Context(), ngCtx)
-			ng.Store(ctx, c)
-			return route.Handler()(ctx)
-		})
-	}
+
+	adapter.FiberRegisterRoutes(app, fiberApp)
 
 	fiberApp.Listen(":8080")
 }

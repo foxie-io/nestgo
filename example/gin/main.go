@@ -39,7 +39,6 @@ func main() {
 	adapter.GinRegisterRoutes(app, r)
 
 	r.Run(":8080")
-
 	// curl http://localhost:8080/hello
 	// out => {"code":"OK","data":"Hello, Gin!"}
 }

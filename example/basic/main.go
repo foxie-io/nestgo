@@ -88,7 +88,7 @@ func main() {
 
 	muxHttp := http.NewServeMux()
 	echoHttp := echo.New()
-	fiberHttp := fiber.New()
+	fiberHttp := fiber.New(fiber.Config{EnablePrintRoutes: true})
 
 	// Build app before registering routes to adapters
 	app.Build()
@@ -96,7 +96,7 @@ func main() {
 	adapters.EchoRegisterRoutes(app, echoHttp)
 	adapters.FiberRegisterRoutes(app, fiberHttp)
 
-	go fiberHttp.Listen(":8082")
 	go http.ListenAndServe(":8080", muxHttp)
-	echoHttp.Start(":8081")
+	go echoHttp.Start(":8081")
+	fiberHttp.Listen(":8082")
 }

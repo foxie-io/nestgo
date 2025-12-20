@@ -41,6 +41,7 @@ func FiberHandler(scopeHandler func() ng.Handler) fiber.Handler {
 func FiberRegisterRoutes(ng ng.App, app *fiber.App) {
 	for _, route := range ng.Routes() {
 		fiberHandler := FiberHandler(route.Handler)
-		app.Add(route.Method(), route.Path(), fiberHandler)
+		r := app.Add(route.Method(), route.Path(), fiberHandler)
+		r.Name(route.Name())
 	}
 }
