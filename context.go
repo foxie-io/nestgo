@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	nghttp "github.com/foxie-io/ng/http"
-
 	"sync"
+
+	nghttp "github.com/foxie-io/ng/http"
 )
 
 const (

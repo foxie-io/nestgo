@@ -26,8 +26,6 @@ type Config struct {
 	ErrorHandler func(ctx context.Context) error
 }
 
-type ratelimitConfigKey struct{}
-
 type ClientData struct {
 	ReqCounts int
 	ResetAt   time.Time
@@ -66,16 +64,11 @@ func New(config *Config) *Limiter {
 	return limiter
 }
 
-func WithRateLimit(config *Config) ng.Option {
-	return ng.WithMetadata(ratelimitConfigKey{}, config)
-}
-
 func (rl *Limiter) Allow(ctx context.Context) error {
 	config := rl.config
 
 	// Check if there is a route-specific rate limit configuration
-	metadata, _ := ng.GetContext(ctx).Route().Core().Metadata(ratelimitConfigKey{})
-	if ratelimitConfig, ok := metadata.(*Config); ok {
+	if ratelimitConfig, ok := GetConfig(ctx); ok {
 		config = overideOptional(ratelimitConfig, rl.config)
 	}
 

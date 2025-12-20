@@ -1,4 +1,4 @@
-# (NG) NestGo Framework Documentation
+# NG Framework Documentation
 
 ## Overview
 
@@ -108,20 +108,13 @@ func main() {
 
 	// Build and start the application
 	app.Build()
-
-    // Start the HTTP server
-    mux := http.NewServeMux()
-    ngadapter.ServeMuxRegisterRoutes(app, mux)
-
-    // Listen and serve
-	http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", nil)
 }
 ```
 
 ### 2. Add Middleware
 
 ```go
-// example/basic/middlewares/debug.go
 app := ng.NewApp(
 	ng.WithMiddleware(
 		middlewares.HttpDebug{},
@@ -132,7 +125,6 @@ app := ng.NewApp(
 ### 3. Add Guards
 
 ```go
-// example/basic/middlewares/limiter/limiter.go
 app := ng.NewApp(
 	ng.WithGuards(
 		limiter.New(&limiter.Config{
@@ -149,7 +141,6 @@ app := ng.NewApp(
 ### 4. Add Interceptors
 
 ```go
-// no example yet
 package main
 
 import (
@@ -201,8 +192,9 @@ func main() {
 this is an example of using multiple adapters in the same application
 normally, you would only use one adapter per application
 
+file: example/basic/main.go
+
 ```go
-// example/basic/main.go
 muxHttp := http.NewServeMux()
 echoHttp := echo.New()
 fiberHttp := fiber.New()

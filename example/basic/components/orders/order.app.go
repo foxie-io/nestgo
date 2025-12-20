@@ -10,7 +10,7 @@ import (
 func NewOrderApp() ng.App {
 	orderApp := ng.NewApp(
 		ng.WithPrefix("/order-app"),
-		limiter.WithRateLimit(&limiter.Config{
+		limiter.WithConfig(&limiter.Config{
 			Limit:  10,
 			Window: time.Minute,
 		}),
