@@ -2,7 +2,7 @@
 
 ## Overview
 
-NG is a lightweight and modular Go framework inspired by NestJS. It is designed to simplify the development of scalable and maintainable web applications. NG provides a structured approach to building applications with support for controllers, middleware, guards, interceptors, and dynamic adapters for various HTTP frameworks.
+NestGo is a lightweight and modular Go framework inspired by NestJS. It is designed to simplify the development of scalable and maintainable web applications. NG provides a structured approach to building applications with support for controllers, middleware, guards, interceptors, and dynamic adapters for various HTTP frameworks.
 
 ---
 
@@ -243,6 +243,19 @@ example/
         user.app.go
         user.controller.go
 ```
+
+### Examples Directory
+
+The `examples` directory contains various subdirectories showcasing how to use the NG framework with different setups and configurations. Below is a list of available examples:
+
+- **basic/**: A simple example demonstrating the core features of the NG framework, including middleware, controllers, and adapters.
+- **chi/**: Example using the `chi` router as the HTTP adapter.
+- **fiber/**: Example using the `fiber` framework as the HTTP adapter.
+- **fx/**: Example integrating NG with the `fx` dependency injection framework.
+- **gin/**: Example using the `gin` framework as the HTTP adapter.
+- **http/**: Example using the standard `http.ServeMux` as the HTTP adapter.
+
+Each example contains its own `main.go` file and supporting components, middleware, and adapters. Navigate to the respective directories to explore the code and learn how to integrate NG into your projects.
 
 ---
 
