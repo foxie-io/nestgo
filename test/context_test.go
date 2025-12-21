@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/foxie-io/ng"
-	"github.com/stretchr/testify/assert"
 )
 
 type Key struct {
@@ -20,8 +19,6 @@ func (k Key) PayloadKey() string {
 }
 
 func TestRequestContextPoolRacing(t *testing.T) {
-	assert := assert.New(t)
-
 	const goroutines = 100
 	const iterations = 1000
 
@@ -48,12 +45,16 @@ func TestRequestContextPoolRacing(t *testing.T) {
 				ctx.Store(Key{"id"}, id)
 				val, ok := ctx.Load(Key{"id"})
 
-				assert.True(ok)
-				assert.Equal(id, val, " goroutine %d, iteration %d", i, j)
+				if !ok {
+					t.Errorf("Expected key to be present, but it was not (goroutine %d, iteration %d)", i, j)
+				}
+				if id != val {
+					t.Errorf("Expected id %v, but got %v (goroutine %d, iteration %d)", id, val, i, j)
+				}
 
 				// Atomically check and store context ID
 				if _, loaded := checker.LoadOrStore(val, struct{}{}); loaded {
-					assert.Fail("Duplicate context ID detected", id)
+					t.Errorf("Duplicate context ID detected: %v", id)
 				}
 			}
 		}(i)
