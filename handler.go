@@ -2,12 +2,13 @@ package ng
 
 import "context"
 
+// Handler is a function that handles a request
 type Handler func(ctx context.Context) error
 
+// PreHandler is a function that runs before the main handler
 type PreHandler func(ctx context.Context)
 
-// Handle simple
-
+// Handle combine multiple handlers into one
 func Handle(handlers ...Handler) Handler {
 	return func(ctx context.Context) error {
 		for _, h := range handlers {
@@ -19,12 +20,14 @@ func Handle(handlers ...Handler) Handler {
 	}
 }
 
+// ScopeHandler simple handler wrapper for scoped handler definition
 func ScopeHandler(scopeHandler func() Handler) Handler {
 	return func(ctx context.Context) error {
 		return scopeHandler()(ctx)
 	}
 }
 
+// HandlerOption is handler option
 func WithHandler(handler Handler) HandlerOption {
 	return func(c *config) {
 		c.core.handlers = append(c.core.handlers, handler)

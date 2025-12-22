@@ -147,6 +147,7 @@ func (c *core) buildInterceptorChain(routeHandler Handler) Handler {
 	return next
 }
 
+// WithPrefix sets a prefix for all routes in the core
 func WithPrefix(prefix string) Option {
 	return func(c *config) {
 		c.core.prefix = normolizePath(prefix)
@@ -162,12 +163,14 @@ func WithGuards(guards ...Guard) Option {
 	}
 }
 
+// WithMiddleware adds middlewares to the core
 func WithMiddleware(middlewares ...Middleware) Option {
 	return func(c *config) {
 		c.core.middlewares = append(c.core.middlewares, middlewares...)
 	}
 }
 
+// WithInterceptor adds interceptors to the core
 func WithInterceptor(interceptors ...Interceptor) Option {
 	return func(c *config) {
 		c.core.interceptors = append(c.core.interceptors, interceptors...)
@@ -188,6 +191,7 @@ func WithMetadata(pairs ...any) Option {
 	}
 }
 
+// WithResponseHandler sets a custom response handler for the core
 func WithResponseHandler(handler ResponseHandler) Option {
 	return func(c *config) {
 		c.core.responseHandler = handler

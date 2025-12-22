@@ -39,6 +39,7 @@ func (r *route) Handler() Handler {
 
 type HandlerOption = Option
 
+// NewRoute create new route instance
 func NewRoute(method string, path string, opt HandlerOption, opts ...Option) Route {
 	route := &route{
 		method: method,

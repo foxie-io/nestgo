@@ -8,5 +8,3 @@ use (
 	./gin
 	./http
 )
-
-replace github.com/foxie-io/ng => ../..

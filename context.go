@@ -53,6 +53,7 @@ type Context interface {
 	Clone() Context
 }
 
+// RouteData is route information
 type RouteData interface {
 	Core() Core
 	Name() string
@@ -62,10 +63,12 @@ type RouteData interface {
 
 var _ Context = (*requestContext)(nil)
 
+// requestContext implementation of Context
 type requestContext struct {
 	locals sync.Map
 }
 
+// newRequestContext create new request context
 func newRequestContext() *requestContext {
 	r := &requestContext{}
 	return r
@@ -112,6 +115,7 @@ func (r *requestContext) GetResponse() nghttp.HttpResponse {
 	return nil
 }
 
+// Response send response to client
 func (r *requestContext) Response() error {
 	resp := r.GetResponse()
 	if resp == nil {
@@ -122,6 +126,7 @@ func (r *requestContext) Response() error {
 	return nil
 }
 
+// GetRoute get route data
 func (r *requestContext) GetRoute() Route {
 	resp, ok := r.Load(routeKey)
 	if ok {
@@ -130,11 +135,13 @@ func (r *requestContext) GetRoute() Route {
 	return nil
 }
 
+// setOwner set route data
 func (r *requestContext) setOwner(route Route) Context {
 	r.Store(routeKey, route)
 	return r
 }
 
+// Route get route data
 func (r *requestContext) Route() RouteData {
 	resp, ok := r.Load(routeKey)
 	if ok {
@@ -183,6 +190,7 @@ func Load[T any](ctx context.Context, keys ...PayloadKeyer) (value T, err error)
 	return expectedType, nil
 }
 
+// Delete delete value from context by given key
 func Delete[T any](ctx context.Context, keys ...PayloadKeyer) {
 	key := dynamicKey[T](keys...)
 	GetContext(ctx).Delete(key)
@@ -235,6 +243,7 @@ func NewContext(ctx context.Context) (context.Context, Context) {
 	return withContext(ctx, rc), rc
 }
 
+// acquireContext get or create request context
 func acquireContext(ctx context.Context) (c context.Context, rc Context, new bool) {
 	rc = GetContext(ctx)
 	if rc != nil {

@@ -7,7 +7,7 @@ replace github.com/foxie-io/ng => ./../..
 require github.com/labstack/echo/v4 v4.14.0
 
 require (
-	github.com/foxie-io/ng v0.3.0
+	github.com/foxie-io/ng v0.3.1
 	github.com/gofiber/fiber/v2 v2.52.10
 )
 

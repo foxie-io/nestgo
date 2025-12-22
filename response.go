@@ -18,6 +18,7 @@ func ThrowAny(value any) {
 	ThrowResponse(httpResp)
 }
 
+// Respond sets the HTTP response in the context
 func Respond(ctx context.Context, val nghttp.HttpResponse) error {
 	rc := GetContext(ctx)
 	if rc != nil {
@@ -28,12 +29,13 @@ func Respond(ctx context.Context, val nghttp.HttpResponse) error {
 	return errors.New("request context not found, ng.AcquireContext missing?")
 }
 
+// set response value in context
 func setResponseAny(rc Context, val any) {
 	httpResp := nghttp.WrapResponse(val)
 	rc.SetResponse(httpResp)
 }
 
-// set response value in context
+// RespondAny sets any value as the HTTP response in the context
 func RespondAny(ctx context.Context, val any) {
 	setResponseAny(GetContext(ctx), val)
 }

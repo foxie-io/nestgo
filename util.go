@@ -17,6 +17,7 @@ func normolizePath(path string) string {
 	return "/" + path
 }
 
+// ExtractControllerRoutes extracts routes from a controller initializer
 func ExtractControllerRoutes(app App, config ControllerInitializer) ([]Route, error) {
 	routes := []Route{}
 	configType := reflect.TypeOf(config)

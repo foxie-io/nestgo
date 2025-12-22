@@ -3,6 +3,7 @@ package ng
 var _ Controller = (*controller)(nil)
 
 type (
+	// Controller is the main interface for handling routes
 	Controller interface {
 		Core() Core
 		Routes() []Route
@@ -14,14 +15,17 @@ type (
 	}
 )
 
+// Routes get controller routes
 func (c *controller) Routes() []Route {
 	return c.routes
 }
 
+// Core get controller core
 func (c *controller) Core() Core {
 	return c.core
 }
 
+// NewController create new controller instance
 func NewController(opts ...Option) Controller {
 	controller := &controller{core: newCore()}
 
@@ -57,6 +61,7 @@ func (c *controller) build(app *app, config ControllerInitializer) Controller {
 	return c
 }
 
+// ControllerInitializer interface for initializing controller
 type ControllerInitializer interface {
 	InitializeController() Controller
 }
@@ -65,6 +70,7 @@ type ControllerInitializer interface {
 type DefaultControllerInitializer struct {
 }
 
+// InitializeController default implementation
 func (c *DefaultControllerInitializer) InitializeController() Controller {
 	return NewController()
 }

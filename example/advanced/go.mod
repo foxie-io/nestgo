@@ -5,7 +5,8 @@ go 1.25.2
 replace github.com/foxie-io/ng => ./../..
 
 require (
-	github.com/foxie-io/ng v0.3.0
+	github.com/foxie-io/ng v0.3.1
+	github.com/swaggo/swag/v2 v2.0.0-rc4
 	go.uber.org/fx v1.24.0
 	gorm.io/gorm v1.31.1
 )
@@ -50,7 +51,6 @@ require (
 	github.com/go-playground/validator/v10 v10.29.0
 	github.com/labstack/echo/v4 v4.14.0
 	github.com/swaggo/swag v1.16.6
-	github.com/swaggo/swag/v2 v2.0.0-rc4
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
