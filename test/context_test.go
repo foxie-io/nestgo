@@ -37,7 +37,7 @@ func TestRequestContextPoolRacing(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			for j := 0; j < iterations; j++ {
-				_, ctx := ng.AcquireContext(context.Background())
+				_, ctx := ng.NewContext(context.Background())
 				defer ctx.Clear()
 
 				id := newId()
@@ -66,6 +66,6 @@ func TestRequestContextPoolRacing(t *testing.T) {
 // BenchmarkAcquireContext-8   	18629553	        66.67 ns/op	     208 B/op	       2 allocs/op
 func BenchmarkAcquireContext(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ng.AcquireContext(context.Background())
+		ng.NewContext(context.Background())
 	}
 }

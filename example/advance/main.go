@@ -50,13 +50,14 @@ func (s *Starter) OnStop(ctx context.Context) error {
 }
 
 func NewApp() ng.App {
-	stats := adapter.NewStats()
+	appStats := adapter.NewStats()
+
 	app := ng.NewApp(
-		ng.WithMiddleware(stats),
+		ng.WithMiddleware(appStats),
 		ng.WithResponseHandler(adapter.ResponseHandler),
 	)
 
-	app.AddController(stats)
+	app.AddController(appStats)
 	return app
 }
 

@@ -10,10 +10,8 @@ import (
 )
 
 const (
-	responseKey         PayloadKey = "response"
-	controllerConfigKey PayloadKey = "controller_config"
-	routeKey            PayloadKey = "route"
-	appKey              PayloadKey = "app"
+	responseKey PayloadKey = "response"
+	routeKey    PayloadKey = "route"
 )
 
 // Context is a request context
@@ -30,11 +28,11 @@ type Context interface {
 	// if not found, store the value into context
 	LoadOrStore(key PayloadKeyer, value any) (actual any, loaded bool)
 
-	// Clear clear all info stored in context
-	Clear()
-
 	// Delete delete value from context by given key
 	Delete(key PayloadKeyer)
+
+	// Clear clear all info stored in context
+	Clear()
 
 	// SetResponse
 	SetResponse(resp nghttp.HttpResponse) Context
@@ -46,25 +44,25 @@ type Context interface {
 	Response() error
 
 	// immutable data
-	setOwner(app App, config ControllerInitializer, route Route) Context
+	setOwner(route Route) Context
 
 	// not available pre execute
-	App() App
-
-	// not available pre execute
-	Route() Route
-
-	// not available pre execute
-	Config() ControllerInitializer
+	Route() RouteData
 
 	// clone context for goroutine use
 	Clone() Context
 }
 
+type RouteData interface {
+	Core() Core
+	Name() string
+	Method() string
+	Path() string
+}
+
 var _ Context = (*requestContext)(nil)
 
 type requestContext struct {
-	id     string
 	locals sync.Map
 }
 
@@ -132,30 +130,12 @@ func (r *requestContext) GetRoute() Route {
 	return nil
 }
 
-func (r *requestContext) setOwner(app App, config ControllerInitializer, route Route) Context {
-	r.Store(appKey, app)
-	r.Store(controllerConfigKey, config)
+func (r *requestContext) setOwner(route Route) Context {
 	r.Store(routeKey, route)
 	return r
 }
 
-func (r *requestContext) Config() ControllerInitializer {
-	resp, ok := r.Load(controllerConfigKey)
-	if ok {
-		return resp.(ControllerInitializer)
-	}
-	return nil
-}
-
-func (r *requestContext) App() App {
-	resp, ok := r.Load(appKey)
-	if ok {
-		return resp.(App)
-	}
-	return nil
-}
-
-func (r *requestContext) Route() Route {
+func (r *requestContext) Route() RouteData {
 	resp, ok := r.Load(routeKey)
 	if ok {
 		return resp.(Route)
@@ -171,10 +151,6 @@ func (r *requestContext) Clone() Context {
 		return true
 	})
 	return clone
-}
-
-func (r *requestContext) ID() string {
-	return r.id
 }
 
 func dynamicKey[T any](keys ...PayloadKeyer) PayloadKeyer {
@@ -249,7 +225,7 @@ func withContext(ctx context.Context, rctx Context) context.Context {
 }
 
 // if return existed ctx, otherwise create new one
-func AcquireContext(ctx context.Context) (context.Context, Context) {
+func NewContext(ctx context.Context) (context.Context, Context) {
 	rc := GetContext(ctx)
 	if rc != nil {
 		return ctx, rc
@@ -259,7 +235,7 @@ func AcquireContext(ctx context.Context) (context.Context, Context) {
 	return withContext(ctx, rc), rc
 }
 
-func acquireContextCheck(ctx context.Context) (c context.Context, rc Context, new bool) {
+func acquireContext(ctx context.Context) (c context.Context, rc Context, new bool) {
 	rc = GetContext(ctx)
 	if rc != nil {
 		return ctx, rc, false

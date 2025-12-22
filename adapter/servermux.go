@@ -7,9 +7,10 @@ import (
 	"net/http"
 
 	"github.com/foxie-io/ng"
+	nghttp "github.com/foxie-io/ng/http"
 )
 
-func ServeMuxResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
+func ServeMuxResponseHandler(ctx context.Context, info *nghttp.ResponseInfo) error {
 	w := ng.MustLoad[http.ResponseWriter](ctx)
 	if info.HttpResponse != nil {
 		w.WriteHeader(info.HttpResponse.StatusCode())
@@ -18,7 +19,7 @@ func ServeMuxResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
 		return nil
 	}
 
-	log.Printf("no http response found in response info: raw:%v, stacks:%v", info.Raw, string(info.Stack))
+	log.Printf("no http response found in response info: raw:%v", info.Raw)
 	status := http.StatusInternalServerError
 	http.Error(w, http.StatusText(status), status)
 	return nil
@@ -26,7 +27,7 @@ func ServeMuxResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
 
 func ServeMuxHandler(scopeHandler func() ng.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := ng.AcquireContext(r.Context())
+		ctx, _ := ng.NewContext(r.Context())
 
 		// store in context
 		ng.Store(ctx, w)

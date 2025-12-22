@@ -2,8 +2,6 @@ package ng
 
 import (
 	"context"
-	"fmt"
-	"runtime/debug"
 
 	nghttp "github.com/foxie-io/ng/http"
 )
@@ -88,15 +86,11 @@ func (r *route) addPreCore(preCores ...Core) Route {
 	}
 
 	// final route info
-
 	r.path = prefix + r.path
 	r.core.responseHandler = responseHander
 	r.core.preExecutes = preExcutes
 	r.core.guards = guards
 	r.core.middlewares = middlewares
-
-	// todo: build handler
-	// r.buildedHandler = r.core.buildHandler()
 	return r
 }
 
@@ -105,66 +99,84 @@ func (r *route) build() {
 		panic("core already built")
 	}
 
-	r.handler = r.buildFinalHandler()
+	r.handler = r.buildRequestFlow()
 	r.core.built.Store(true)
 }
 
-func (r *route) buildFinalHandler() Handler {
-	c := r.core
-	routeHandler := Handle(c.handlers...)
-
-	interceptorChain := c.buildInterceptorChain(routeHandler)
-
-	guardChain := func(ctx context.Context) error {
-		if err := c.applyGuards(ctx); err != nil {
-			return err
-		}
-		return interceptorChain(ctx)
+func (r *route) buildResponseHandler() ResponseHandler {
+	responseHandler := r.core.responseHandler
+	if responseHandler == nil {
+		panic("response handler is not defined, WithResponseHandler is required")
 	}
 
-	finalHandler := c.buildMiddlewareChain(guardChain)
+	return responseHandler
+}
 
-	return func(ctx context.Context) (returnErr error) {
-		ctx, rc, created := acquireContextCheck(ctx)
+func (r *route) buildHandler() Handler {
+	handler := Handle(r.core.handlers...)
+	return handler
+}
+
+func (r *route) withSavedResponseState(next Handler) Handler {
+	return func(ctx context.Context) error {
+		defer func() {
+			if r := recover(); r != nil {
+				setResponseAny(GetContext(ctx), r)
+			}
+		}()
+
+		if err := next(ctx); err != nil {
+			panic(err)
+		}
+
+		return nil
+	}
+}
+
+// prexecute -> middleware -> guard -> interceptor -> route handler -> response handler
+func (r *route) buildRequestFlow() Handler {
+
+	// route handler with response capture
+	routeHandler := r.withSavedResponseState(r.buildHandler())
+
+	// interceptor around route handler
+	interceptorChain := r.withSavedResponseState(r.core.buildInterceptorChain(routeHandler))
+
+	// guard before interceptor
+	guardChain := r.withSavedResponseState(r.core.buildGuardChain(interceptorChain))
+
+	// middleware around guard
+	middlewareChain := r.core.buildMiddlewareChain(guardChain)
+
+	// last execution: response handler
+	final := r.buildResponseHandler()
+
+	return func(ctx context.Context) (err error) {
+		ctx, rc, created := acquireContext(ctx)
 		if created {
 			defer rc.Clear()
 		}
 
 		defer func() {
+			// final response handling
+			httpResp := nghttp.WrapResponse(rc.GetResponse())
+			err = final(ctx, httpResp)
+		}()
 
-			// 4 response handler allow to handle panic
+		defer func() {
+			// 3 capture panic to response
 			if r := recover(); r != nil {
-				if c.responseHandler == nil {
-					if err, ok := r.(error); ok {
-						returnErr = err
-					} else {
-						returnErr = fmt.Errorf("panic %v", r)
-					}
-
-					return
-				}
-
-				if res, ok := r.(nghttp.HttpResponse); ok {
-					c.responseHandler(ctx, &ResponseInfo{
-						HttpResponse: res,
-						Raw:          r,
-					})
-					return
-				} else {
-					c.responseHandler(ctx, &ResponseInfo{
-						Raw:   r,
-						Stack: debug.Stack(),
-					})
-				}
+				setResponseAny(rc, r)
 			}
 		}()
 
-		// 1
-		if err := c.applyPreExecutes(ctx); err != nil {
+		// 1 pre executes before everything
+		if err := r.core.applyPreExecutes(ctx); err != nil {
 			return err
 		}
 
-		if err := finalHandler(ctx); err != nil {
+		// 2 middleware -> guard -> interceptor -> route handler
+		if err := middlewareChain(ctx); err != nil {
 			panic(err)
 		}
 

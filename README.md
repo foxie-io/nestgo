@@ -259,6 +259,140 @@ Each example contains its own `main.go` file and supporting components, middlewa
 
 ---
 
+## Project Structure
+
+The project is organized as follows:
+
+```
+.
+├── app.go
+├── config.go
+├── context.go
+├── controller.go
+├── core.go
+├── go.mod
+├── go.sum
+├── handler.go
+├── interface.go
+├── LICENSE
+├── README.md
+├── response.go
+├── route.go
+├── skipper.go
+├── util.go
+├── adapter/
+│   └── servermux.go
+├── docs/
+│   └── framework.md
+├── example/
+│   ├── advance/
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── main.go
+│   │   ├── Makefile
+│   │   ├── README.md
+│   │   ├── adapter/
+│   │   │   ├── echo.go
+│   │   │   ├── stats.go
+│   │   │   └── reqs/
+│   │   │       ├── binder.go
+│   │   │       └── validator.go
+│   │   ├── components/
+│   │   │   ├── orders/
+│   │   │   │   ├── order.controller.go
+│   │   │   │   ├── order.module.go
+│   │   │   │   ├── order.service.go
+│   │   │   │   └── dtos/
+│   │   │   │       ├── order.request.go
+│   │   │   │       └── order.response.go
+│   │   │   └── users/
+│   │   │       ├── user.controller.go
+│   │   │       ├── user.module.go
+│   │   │       ├── user.service.go
+│   │   │       └── dtos/
+│   │   │           ├── user.request.go
+│   │   │           └── user.response.go
+│   │   ├── dal/
+│   │   │   ├── order.dao.go
+│   │   │   └── user.dao.go
+│   │   ├── docs/
+│   │   │   ├── docs.go
+│   │   │   ├── swagger.json
+│   │   │   └── swagger.yaml
+│   │   ├── models/
+│   │   │   ├── order.model.go
+│   │   │   └── user.model.go
+│   │   └── router/
+│   │       ├── grouper.go
+│   │       ├── router.go
+│   │       └── swagger.go
+│   ├── basic/
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── main.go
+│   │   ├── adapters/
+│   │   │   ├── dynamic.go
+│   │   │   ├── echo.go
+│   │   │   ├── fiber.go
+│   │   │   └── servermux.go
+│   │   ├── components/
+│   │   │   ├── orders/
+│   │   │   │   ├── order.app.go
+│   │   │   │   └── order.controller.go
+│   │   │   └── users/
+│   │   │       ├── user.app.go
+│   │   │       └── user.controller.go
+│   │   └── middlewares/
+│   │       ├── debug.go
+│   │       ├── stats.go
+│   │       └── limiter/
+│   │           ├── limiter.go
+│   │           └── option.go
+│   ├── chi/
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── main.go
+│   │   └── adapter/
+│   │       └── chi.go
+│   ├── fiber/
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── main.go
+│   │   └── adapter/
+│   │       └── fiber.go
+│   ├── gin/
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── main.go
+│   │   └── adapter/
+│   │       └── gin.go
+│   └── http/
+│       ├── go.mod
+│       ├── go.sum
+│       ├── main.go
+│       └── README.md
+├── http/
+│   ├── error.go
+│   ├── http.go
+│   └── response.go
+└── test/
+    ├── context_test.go
+    └── controller_test.go
+```
+
+### Key Directories
+
+- **adapter/**: Contains server adapter implementations.
+- **docs/**: Documentation files for the framework.
+- **example/**: Example projects demonstrating various use cases of the framework.
+  - **advance/**: Advanced example with complex project structure.
+  - **basic/**: Basic example showcasing core features.
+  - **chi/**, **fiber/**, **gin/**, **http/**: Examples using different HTTP frameworks.
+- **http/**: HTTP-related utilities and response handling.
+- **test/**: Unit tests for the framework.
+
+---
+
 ## Documentation
 
 ### Controllers

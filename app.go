@@ -90,14 +90,14 @@ func (a *app) buildRouter() App {
 
 func (a *app) extractRouterFromSubApp() {
 	for _, sub := range a.subApps {
-		for _, r := range sub.(*app).buildController().Routes() {
+		subApp := sub.(*app).buildController()
+		for _, r := range subApp.Routes() {
 			a.AddRoute(r)
 		}
 	}
 }
 
 func (a *app) Build() App {
-
 	if a.core.built.Load() {
 		panic("app already built")
 	}

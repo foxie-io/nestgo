@@ -48,13 +48,12 @@ func (s *Stats) Use(ctx context.Context, next ng.Handler) {
 
 		s.RequestCount++
 
+		// todo: make sure this exist
 		s.Statuses[rc.GetResponse().StatusCode()]++
 		s.EndpointCount[rc.Route().Name()]++
 	}()
 
-	if err := next(ctx); err != nil {
-		ng.ResponseAny(ctx, err)
-	}
+	next(ctx)
 }
 
 // Route defines the HTTP route for retrieving statistics.

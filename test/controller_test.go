@@ -34,8 +34,14 @@ type Log struct {
 }
 
 func (u Log) Use(ctx context.Context, next ng.Handler) {
-	u.logBefore("Middleware before")
 
+	u.logBefore("Middleware before")
+	defer func() {
+		rc := ng.GetContext(ctx)
+		resp := rc.GetResponse()
+
+		u.logAfter("Middleware after:" + fmt.Sprintf("%v", resp != nil))
+	}()
 	next(ctx)
 }
 
@@ -53,7 +59,12 @@ func (u Log) logAfter(name string) {
 
 func (u Log) Intercept(ctx context.Context, next ng.Handler) {
 	u.logBefore("Intercept before")
-	defer u.logAfter("Intercept Ater")
+	defer func() {
+		rc := ng.GetContext(ctx)
+		resp := rc.GetResponse()
+
+		u.logAfter("Intercept after:" + fmt.Sprintf("%v", resp != nil))
+	}()
 	next(ctx)
 }
 
@@ -78,10 +89,10 @@ func (c *UserController) Register() ng.Route {
 	return ng.NewRoute(http.MethodPost, "/register",
 		ng.WithMiddleware(Log{Level: "R-1"}, Log{Level: "R-2"}),
 		ng.WithInterceptor(Log{Level: "R-1"}, Log{Level: "R-2"}),
-
 		ng.WithHandler(func(ctx context.Context) error {
 			whitespace++
 			w := strings.Repeat("  ", whitespace)
+
 			log.Println(w, "Handler: i am from route ->", ng.GetContext(ctx).Route().Path())
 			return ng.Respond(ctx, nghttp.NewResponse("register is token"))
 		}),
@@ -94,10 +105,9 @@ func TestController(t *testing.T) {
 		ng.WithPrefix("/app"),
 		ng.WithMiddleware(Log{Level: "A-1"}),
 		ng.WithGuards(Log{Level: "A-1"}),
-
-		ng.WithResponseHandler(func(ctx context.Context, info *ng.ResponseInfo) error {
+		ng.WithResponseHandler(func(ctx context.Context, val nghttp.HttpResponse) error {
 			rc := ng.GetContext(ctx)
-			log.Println("ResponseHandler:", rc.Route().Path(), info.Raw)
+			log.Println("resp:", rc.Route().Path(), val)
 			return nil
 		}),
 	)
@@ -106,9 +116,6 @@ func TestController(t *testing.T) {
 	ctx := context.Background()
 
 	for _, r := range app.Build().Routes() {
-		if err := r.Handler()(ctx); err != nil {
-
-			fmt.Println("err", err.Error())
-		}
+		r.Handler()(ctx)
 	}
 }

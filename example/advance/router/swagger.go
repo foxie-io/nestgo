@@ -67,19 +67,15 @@ func (su *SwaggerDocs) UI() ng.Route {
 			return nil
 		}),
 		// custom response handler to serve HTML
-		ng.WithResponseHandler(func(ctx context.Context, info *ng.ResponseInfo) error {
+		ng.WithResponseHandler(func(ctx context.Context, info nghttp.HttpResponse) error {
 			c := ng.MustLoad[echo.Context](ctx)
-			if info.HttpResponse == nil {
-				fmt.Println(info.Raw, string(info.Stack))
-				return c.String(500, "internal server error")
-			}
 
-			resp, ok := info.HttpResponse.Response().(string)
+			resp, ok := info.(*SwaggerDocs)
 			if !ok {
 				return c.String(500, "invalid response type")
 			}
 
-			c.HTML(info.HttpResponse.StatusCode(), resp)
+			c.HTML(resp.StatusCode(), resp.Response().(string))
 			return nil
 		}),
 	)

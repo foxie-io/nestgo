@@ -52,6 +52,14 @@ func (r *Response) Update(opts ...Option) *Response {
 	return r
 }
 
+func (r *Response) GetMetadata(key string) (any, bool) {
+	if r.metadata == nil {
+		return nil, false
+	}
+	val, ok := r.metadata[key]
+	return val, ok
+}
+
 // meta is extra data for public info
 func Meta(keyvaluse ...any) Option {
 	return func(err *Response) {

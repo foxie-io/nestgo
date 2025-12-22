@@ -28,8 +28,8 @@ func (con *OrderController) InitializeController() ng.Controller {
 	)
 }
 
-// @Tags        Orders
-// @Summary     Order create
+// @Tags        orders
+// @Summary     create an order
 // @ID          order-create
 // @Accept      json
 // @Produce     json
@@ -60,9 +60,9 @@ func (con *OrderController) Create() ng.Route {
 	)
 }
 
-// @Tags        Orders
-// @Summary     GetOrder orders
-// @ID          get-orders
+// @Tags        orders
+// @Summary     get an order by ID
+// @ID          get-order
 // @Accept      json
 // @Produce     json
 // @Param       struct path dtos.PathID true  "Order ID"
@@ -93,9 +93,9 @@ func (con *OrderController) GetOrder() ng.Route {
 	)
 }
 
-// @Tags        Orders
-// @Summary     Get all orders
-// @ID          get-all-orders
+// @Tags        orders
+// @Summary     get orders
+// @ID          get-orders
 // @Accept      json
 // @Produce     json
 // @Param       query query dtos.ListOrdersRequest true "List Orders Request"
@@ -121,8 +121,8 @@ func (con *OrderController) GetOrders() ng.Route {
 	)
 }
 
-// @Tags        Orders
-// @Summary     Update an order
+// @Tags        orders
+// @Summary     update an order
 // @ID          update-order
 // @Accept      json
 // @Produce     json
@@ -155,8 +155,8 @@ func (con *OrderController) Update() ng.Route {
 	)
 }
 
-// @Tags 		Orders
-// @Summary 	Delete an order
+// @Tags 		orders
+// @Summary 	delete an order
 // @Accept 		json
 // @Produce 	json
 // @Param 		state path dtos.PathID true "Order ID"

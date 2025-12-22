@@ -40,7 +40,7 @@ func NewStats() *Stats {
 	}
 }
 
-func (s *Stats) Use(ctx context.Context, next ng.Handler) {
+func (s *Stats) Use(ctx context.Context, next ng.Handler) error {
 	defer func() {
 		rc := ng.GetContext(ctx)
 		s.mutex.Lock()
@@ -52,7 +52,7 @@ func (s *Stats) Use(ctx context.Context, next ng.Handler) {
 		s.UpDuration = time.Since(s.Uptime).String()
 	}()
 
-	next(ctx)
+	return next(ctx)
 }
 
 func (stats *Stats) Stats() ng.Route {

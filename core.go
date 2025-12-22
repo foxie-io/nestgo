@@ -9,17 +9,16 @@ import (
 	nghttp "github.com/foxie-io/ng/http"
 )
 
-func ThrowResponse(response nghttp.HttpResponse) {
-	panic(response)
-}
+type EventStage string
 
-type ResponseInfo struct {
-	HttpResponse nghttp.HttpResponse
-	Raw          any
-	Stack        []byte
-}
+const (
+	StageAfterGuards       EventStage = "AFTER_GUARDS"
+	StageAfterHandler      EventStage = "AFTER_HANDLER"
+	StageAfterInterceptors EventStage = "AFTER_INTERCEPTORS"
+	StageAfterMiddlewares  EventStage = "AFTER_MIDDLEWARES"
+)
 
-type ResponseHandler func(ctx context.Context, info *ResponseInfo) error
+type ResponseHandler func(ctx context.Context, resp nghttp.HttpResponse) error
 
 type (
 	Core interface {
@@ -81,62 +80,47 @@ func (c *core) applyPreExecutes(ctx context.Context) error {
 	return nil
 }
 
-func errResponseState(ctx context.Context, err error) error {
-	if err == nil {
-		return nil
-	}
+func (c *core) buildGuardChain(handler Handler) Handler {
+	return func(ctx context.Context) (err error) {
+		if len(c.guards) == 0 {
+			return handler(ctx)
+		}
 
-	if resp, ok := err.(nghttp.HttpResponse); ok {
-		GetContext(ctx).SetResponse(resp)
-		return err
-	}
+		skipIds := getSkipperIds(ctx)
+		hasSkipAllGuards := slices.Contains(skipIds, allGuard)
 
-	return err
-}
+		if hasSkipAllGuards {
+			return handler(ctx)
+		}
 
-func (c *core) applyGuards(ctx context.Context) (err error) {
-	if len(c.guards) == 0 {
-		return nil
-	}
-
-	defer func() {
-		err = errResponseState(ctx, err)
-	}()
-
-	skipIds := getSkipperIds(ctx)
-	if hasSkipAllGuards := slices.Contains(getSkipperIds(ctx), allGuard); !hasSkipAllGuards {
-		for _, g := range c.guards {
-			if canSkip(g, skipIds) {
+		for _, guard := range c.guards {
+			if canSkip(guard, skipIds) {
 				continue
 			}
 
-			if err := g.Allow(ctx); err != nil {
+			if err := guard.Allow(ctx); err != nil {
 				return err
 			}
 		}
-	}
 
-	return nil
+		return handler(ctx)
+	}
 }
 
 func (c *core) buildMiddlewareChain(routeHandler Handler) Handler {
 	next := routeHandler
 
 	for i := len(c.middlewares) - 1; i >= 0; i-- {
-		m := c.middlewares[i]
+		middleware := c.middlewares[i]
 		n := next
 
 		next = func(ctx context.Context) (err error) {
-			defer func() {
-				err = errResponseState(ctx, err)
-			}()
-
-			if canSkip(m, getSkipperIds(ctx)) { // runtime evaluation
+			if canSkip(middleware, getSkipperIds(ctx)) { // runtime evaluation
 				return n(ctx)
 			}
 
-			m.Use(ctx, n)
-			return nil
+			middleware.Use(ctx, n)
+			return
 		}
 	}
 
@@ -147,20 +131,16 @@ func (c *core) buildInterceptorChain(routeHandler Handler) Handler {
 	next := routeHandler
 
 	for i := len(c.interceptors) - 1; i >= 0; i-- {
-		m := c.interceptors[i]
+		interceptor := c.interceptors[i]
 		n := next
 
 		next = func(ctx context.Context) (err error) {
-			defer func() {
-				err = errResponseState(ctx, err)
-			}()
-
-			if canSkip(m, getSkipperIds(ctx)) { // runtime evaluation
+			if canSkip(interceptor, getSkipperIds(ctx)) { // runtime evaluation
 				return n(ctx)
 			}
 
-			m.Intercept(ctx, n)
-			return nil
+			interceptor.Intercept(ctx, n)
+			return
 		}
 	}
 

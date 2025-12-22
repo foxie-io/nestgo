@@ -1,92 +1,83 @@
 package users
 
 import (
+	"context"
+	"errors"
 	"example/advance/components/users/dtos"
+	"example/advance/dal"
 	"example/advance/models"
 	"sync"
 
+	"github.com/foxie-io/gormqs"
 	nghttp "github.com/foxie-io/ng/http"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
-	mu       sync.Mutex
-	users    map[int]*models.User
-	userList []*models.User
+	mu      sync.Mutex
+	userDao *dal.UserDao
 }
 
-func NewUserService() *UserService {
+func NewUserService(userDao *dal.UserDao) *UserService {
 	return &UserService{
-		users:    make(map[int]*models.User),
-		userList: []*models.User{},
+
+		userDao: userDao,
 	}
 }
 
-func (s *UserService) CreateUser(req dtos.CreateUserRequest) (*dtos.CreateUserResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := len(s.users) + 1
-	user := &models.User{
-		ID:    id,
+func (s *UserService) CreateUser(ctx context.Context, req dtos.CreateUserRequest) (*dtos.CreateUserResponse, error) {
+	record := &models.User{
 		Name:  req.Name,
 		Email: req.Email,
 	}
-	s.users[id] = user
-	s.userList = append(s.userList, user)
+
+	if err := s.userDao.CreateOne(ctx, record); err != nil {
+		return nil, err
+	}
+
 	return &dtos.CreateUserResponse{
-		ID:    id,
-		Name:  user.Name,
-		Email: user.Email,
+		ID:    record.ID,
+		Name:  record.Name,
+		Email: record.Email,
 	}, nil
 }
 
-func (s *UserService) GetUser(id int) (*dtos.GetUserResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *UserService) GetUser(ctx context.Context, id int) (*dtos.GetUserResponse, error) {
+	var (
+		record = new(dtos.GetUserResponse)
+	)
 
-	user, exists := s.users[id]
-	if !exists {
-		return nil, nghttp.NewErrNotFound()
+	if err := s.userDao.GetOneTo(ctx, record, gormqs.WhereID(id)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nghttp.NewErrNotFound().Update(nghttp.Meta("entity", "User", "id", id))
+		}
+		return nil, err
 	}
-	return &dtos.GetUserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	}, nil
+
+	return record, nil
 }
 
-func (s *UserService) GetAllUsers(dto *dtos.ListUsersRequest) *dtos.GetAllUsersResponse {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *UserService) GetAllUsers(ctx context.Context, dto *dtos.ListUsersRequest) (*gormqs.ListResulter[dtos.GetUserResponse], error) {
 
-	start := (dto.Page - 1) * dto.PageSize
-	end := start + dto.PageSize
+	var (
+		limit  = dto.PageSize
+		offset = (dto.Page - 1) * dto.PageSize
+	)
 
-	if start > len(s.userList) {
-		return &dtos.GetAllUsersResponse{Users: []dtos.GetUserResponse{}}
+	resulter := gormqs.NewListResulter[dtos.GetUserResponse](dto.Selects)
+	if err := s.userDao.GetListTo(ctx, resulter, gormqs.LimitAndOffset(limit, offset)); err != nil {
+		return nil, err
 	}
 
-	if end > len(s.userList) {
-		end = len(s.userList)
-	}
-
-	var users []dtos.GetUserResponse
-	for _, user := range s.userList[start:end] {
-		users = append(users, dtos.GetUserResponse{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
-		})
-	}
-	return &dtos.GetAllUsersResponse{Users: users}
+	return resulter, nil
 }
 
-func (s *UserService) UpdateUser(id int, req *dtos.UpdateUserRequest) (*dtos.UpdateUserResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, exists := s.users[id]; !exists {
-		return nil, nghttp.NewErrNotFound()
+func (s *UserService) UpdateUser(ctx context.Context, id int, req *dtos.UpdateUserRequest) (*dtos.UpdateUserResponse, error) {
+	if _, err := s.userDao.GetOne(ctx, gormqs.WhereID(id), gormqs.Select("id")); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nghttp.NewErrNotFound().Update(nghttp.Meta("entity", "User", "id", id))
+		}
+		return nil, err
 	}
 
 	updatedUser := &models.User{
@@ -94,13 +85,9 @@ func (s *UserService) UpdateUser(id int, req *dtos.UpdateUserRequest) (*dtos.Upd
 		Name:  req.Name,
 		Email: req.Email,
 	}
-	s.users[id] = updatedUser
 
-	for i, user := range s.userList {
-		if user.ID == id {
-			s.userList[i] = updatedUser
-			break
-		}
+	if _, err := s.userDao.Update(ctx, updatedUser, gormqs.WhereID(id)); err != nil {
+		return nil, err
 	}
 
 	return &dtos.UpdateUserResponse{
@@ -110,20 +97,21 @@ func (s *UserService) UpdateUser(id int, req *dtos.UpdateUserRequest) (*dtos.Upd
 	}, nil
 }
 
-func (s *UserService) DeleteUser(params *dtos.DeleteUserRequest) *dtos.DeleteUserResponse {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, exists := s.users[params.ID]; !exists {
-		return &dtos.DeleteUserResponse{Success: false}
+func (s *UserService) DeleteUser(ctx context.Context, id int) (*dtos.DeleteUserResponse, error) {
+	if _, err := s.userDao.GetOne(ctx, gormqs.WhereID(id), gormqs.Select("id")); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nghttp.NewErrNotFound().Update(nghttp.Meta("entity", "User", "id", id))
+		}
+		return nil, err
 	}
-	delete(s.users, params.ID)
 
-	for i, user := range s.userList {
-		if user.ID == params.ID {
-			s.userList = append(s.userList[:i], s.userList[i+1:]...)
-			break
+	if _, err := s.userDao.Delete(ctx, gormqs.WhereID(id)); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nghttp.NewErrNotFound().Update(nghttp.Meta("entity", "User", "id", id))
 		}
 	}
-	return &dtos.DeleteUserResponse{Success: true}
+
+	return &dtos.DeleteUserResponse{
+		Success: true,
+	}, nil
 }

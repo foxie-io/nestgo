@@ -1,13 +1,15 @@
 package nghttp
 
 import (
-	"errors"
 	"net/http"
 )
 
 type (
 	HttpResponse interface {
+		// return HTTP status code
 		StatusCode() int
+
+		// response body
 		Response() any
 	}
 )
@@ -35,11 +37,37 @@ func NewResponse(data any, opts ...Option) *Response {
 	}).Update(opts...)
 }
 
-func WrapError(err error) *Response {
-	var resp *Response
-	if errors.As(err, &resp) {
-		return resp
+func WrapResponse(val any) HttpResponse {
+	if val == nil {
+		return EmptyResponse()
 	}
 
-	return NewError(CodeUnknown, http.StatusInternalServerError, err.Error())
+	switch t := val.(type) {
+	case HttpResponse:
+		return t
+	default:
+		return NewErrUnknown().Update(Metadata("raw", val))
+	}
+}
+
+func RawResponse(val HttpResponse) any {
+	if resp, ok := val.(*Response); ok {
+		if raw, exists := resp.GetMetadata("raw"); exists {
+			return raw
+		}
+	}
+	return val
+}
+
+/*
+	{
+	  "code": OK,
+	  "message": "ok",
+	}
+*/
+func EmptyResponse() *Response {
+	return &Response{
+		Code:       CodeOk,
+		statusCode: http.StatusOK,
+	}
 }

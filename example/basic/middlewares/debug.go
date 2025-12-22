@@ -17,7 +17,7 @@ type HttpDebug struct {
 	ng.DefaultID[HttpDebug]
 }
 
-func (m HttpDebug) Use(ctx context.Context, next ng.Handler) {
+func (m HttpDebug) Use(ctx context.Context, next ng.Handler) error {
 	start := time.Now()
 
 	defer func() {
@@ -30,5 +30,5 @@ func (m HttpDebug) Use(ctx context.Context, next ng.Handler) {
 		}
 	}()
 
-	next(ctx)
+	return next(ctx)
 }

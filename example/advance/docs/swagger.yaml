@@ -23,7 +23,31 @@ definitions:
       userId:
         type: integer
     type: object
+  dtos.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  dtos.CreateUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   dtos.DeleteOrderResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  dtos.DeleteUserResponse:
     properties:
       success:
         type: boolean
@@ -44,6 +68,15 @@ definitions:
       quantity:
         type: integer
     type: object
+  dtos.GetUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   dtos.UpdateOrderRequest:
     properties:
       product:
@@ -62,6 +95,34 @@ definitions:
         type: string
       quantity:
         type: integer
+    type: object
+  dtos.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  dtos.UpdateUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  gormqs.ListResulter-dtos_GetUserResponse:
+    properties:
+      count:
+        type: integer
+      list:
+        items:
+          $ref: '#/definitions/dtos.GetUserResponse'
+        type: array
     type: object
   nghttp.Code:
     enum:
@@ -128,7 +189,7 @@ paths:
     get:
       consumes:
       - application/json
-      operationId: get-all-orders
+      operationId: get-orders
       parameters:
       - default: 1
         in: query
@@ -155,9 +216,9 @@ paths:
                     $ref: '#/definitions/dtos.GetAllOrdersResponse'
                   type: array
               type: object
-      summary: Get all orders
+      summary: get orders
       tags:
-      - Orders
+      - orders
     post:
       consumes:
       - application/json
@@ -181,9 +242,9 @@ paths:
                 data:
                   $ref: '#/definitions/dtos.CreateOrderResponse'
               type: object
-      summary: Order create
+      summary: create an order
       tags:
-      - Orders
+      - orders
   /orders/{id}:
     delete:
       consumes:
@@ -209,13 +270,13 @@ paths:
           description: NOT_FOUND
           schema:
             $ref: '#/definitions/nghttp.Response'
-      summary: Delete an order
+      summary: delete an order
       tags:
-      - Orders
+      - orders
     get:
       consumes:
       - application/json
-      operationId: get-orders
+      operationId: get-order
       parameters:
       - in: path
         name: id
@@ -237,9 +298,9 @@ paths:
           description: NOT_FOUND
           schema:
             $ref: '#/definitions/nghttp.Response'
-      summary: GetOrder orders
+      summary: get an order by ID
       tags:
-      - Orders
+      - orders
     put:
       consumes:
       - application/json
@@ -271,9 +332,9 @@ paths:
           description: NOT_FOUND
           schema:
             $ref: '#/definitions/nghttp.Response'
-      summary: Update an order
+      summary: update an order
       tags:
-      - Orders
+      - orders
   /stats:
     get:
       description: Provides runtime statistics such as uptime and other metrics.
@@ -287,4 +348,159 @@ paths:
       summary: Retrieve application statistics
       tags:
       - stats
+  /users:
+    get:
+      consumes:
+      - application/json
+      operationId: get-users
+      parameters:
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        in: query
+        maximum: 100
+        minimum: 1
+        name: pageSize
+        type: integer
+      - default: count,list
+        description: |-
+          selects can be "count", "list" or "count,list"
+          select to get total count, list data or both
+        in: query
+        name: selects
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/nghttp.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/gormqs.ListResulter-dtos_GetUserResponse'
+              type: object
+      summary: get users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      operationId: user-create
+      parameters:
+      - description: create user request
+        in: body
+        name: state
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/nghttp.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.CreateUserResponse'
+              type: object
+      summary: create an user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/nghttp.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.DeleteUserResponse'
+              type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            $ref: '#/definitions/nghttp.Response'
+      summary: delete an user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      operationId: get-user
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/nghttp.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.GetUserResponse'
+              type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            $ref: '#/definitions/nghttp.Response'
+      summary: get an user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      operationId: update-user
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update user Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/nghttp.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.UpdateUserResponse'
+              type: object
+        "404":
+          description: NOT_FOUND
+          schema:
+            $ref: '#/definitions/nghttp.Response'
+      summary: update an user
+      tags:
+      - users
 swagger: "2.0"

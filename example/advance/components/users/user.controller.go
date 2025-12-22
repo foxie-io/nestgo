@@ -7,6 +7,7 @@ import (
 
 	"net/http"
 
+	_ "github.com/foxie-io/gormqs"
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
 )
@@ -17,6 +18,7 @@ type UserController struct {
 }
 
 func NewUserController(user_s *UserService) *UserController {
+
 	return &UserController{
 		user_s: user_s,
 	}
@@ -28,18 +30,25 @@ func (con *UserController) InitializeController() ng.Controller {
 	)
 }
 
+// @Tags        users
+// @Summary     create an user
+// @ID          user-create
+// @Accept      json
+// @Produce     json
+// @Param       state body dtos.CreateUserRequest true "create user request"
+// @Success     200 {object} nghttp.Response{data=dtos.CreateUserResponse}
+// @Router      /users [post]
 func (con *UserController) Create() ng.Route {
 	return ng.NewRoute(http.MethodPost, "/",
 		ng.WithScopeHandler(func() ng.Handler {
 			var (
 				body dtos.CreateUserRequest
 			)
-
 			return ng.Handle(
 				reqs.BindBody(&body),
 				reqs.Validate(&body),
 				func(ctx context.Context) error {
-					resp, err := con.user_s.CreateUser(body)
+					resp, err := con.user_s.CreateUser(ctx, body)
 					if err != nil {
 						return err
 					}
@@ -51,17 +60,26 @@ func (con *UserController) Create() ng.Route {
 	)
 }
 
+// @Tags        users
+// @Summary     get an user
+// @ID          get-user
+// @Accept      json
+// @Produce     json
+// @Param       userId path dtos.PathID true  "userId"
+// @Success     200 {object} nghttp.Response{data=dtos.GetUserResponse}
+// @Failure     404 {object} nghttp.Response "NOT_FOUND"
+// @Router /users/{id} [get]
 func (con *UserController) Get() ng.Route {
 	return ng.NewRoute(http.MethodGet, "/:id",
 		ng.WithScopeHandler(func() ng.Handler {
 			var (
-				param dtos.GetUserRequest
+				param dtos.PathID
 			)
 			return ng.Handle(
 				reqs.BindParam(&param),
 				reqs.Validate(&param),
 				func(ctx context.Context) error {
-					resp, err := con.user_s.GetUser(param.ID)
+					resp, err := con.user_s.GetUser(ctx, param.ID)
 					if err != nil {
 						return err
 					}
@@ -73,6 +91,14 @@ func (con *UserController) Get() ng.Route {
 	)
 }
 
+// @Tags        users
+// @Summary     get users
+// @ID          get-users
+// @Accept      json
+// @Produce     json
+// @Param       query query dtos.ListUsersRequest true "List Orders Request"
+// @Success     200 {object} nghttp.Response{data=gormqs.ListResulter[dtos.GetUserResponse]}
+// @Router      /users [get]
 func (con *UserController) GetAll() ng.Route {
 	return ng.NewRoute(http.MethodGet, "/",
 		ng.WithScopeHandler(func() ng.Handler {
@@ -84,7 +110,10 @@ func (con *UserController) GetAll() ng.Route {
 				reqs.SetDefault(&query),
 				reqs.Validate(&query),
 				func(ctx context.Context) error {
-					resp := con.user_s.GetAllUsers(&query)
+					resp, err := con.user_s.GetAllUsers(ctx, &query)
+					if err != nil {
+						return err
+					}
 					return ng.Respond(ctx, nghttp.NewResponse(resp))
 				},
 			)
@@ -92,19 +121,28 @@ func (con *UserController) GetAll() ng.Route {
 	)
 }
 
+// @Tags        users
+// @Summary     update an user
+// @ID          update-user
+// @Accept      json
+// @Produce     json
+// @Param       userId path dtos.PathID true "user ID"
+// @Param       body body dtos.UpdateUserRequest true "Update user Request"
+// @Success     200 {object} nghttp.Response{data=dtos.UpdateUserResponse}
+// @Failure     404 {object} nghttp.Response "NOT_FOUND"
+// @Router      /users/{id} [put]
 func (con *UserController) Update() ng.Route {
 	return ng.NewRoute(http.MethodPut, "/:id",
 		ng.WithScopeHandler(func() ng.Handler {
 			var (
-				param dtos.DeleteUserRequest
+				param dtos.PathID
 				body  dtos.UpdateUserRequest
 			)
-
 			return ng.Handle(
 				reqs.BindBody(&body), reqs.BindParam(&param),
 				reqs.Validate(&body), reqs.Validate(&param),
 				func(ctx context.Context) error {
-					resp, err := con.user_s.UpdateUser(param.ID, &body)
+					resp, err := con.user_s.UpdateUser(ctx, param.ID, &body)
 					if err != nil {
 						return err
 					}
@@ -116,17 +154,29 @@ func (con *UserController) Update() ng.Route {
 	)
 }
 
+// @Tags 		users
+// @Summary 	delete an user
+// @Accept 		json
+// @Produce 	json
+// @Param 		userId path dtos.PathID true "user ID"
+// @Success 	200 {object} nghttp.Response{data=dtos.DeleteUserResponse}
+// @Failure     404 {object} nghttp.Response "NOT_FOUND"
+// @Router /users/{id} [delete]
 func (con *UserController) Delete() ng.Route {
 	return ng.NewRoute(http.MethodDelete, "/:id",
 		ng.WithScopeHandler(func() ng.Handler {
 			var (
-				param dtos.DeleteUserRequest
+				param dtos.PathID
 			)
 			return ng.Handle(
 				reqs.BindParam(&param),
 				reqs.Validate(&param),
 				func(ctx context.Context) error {
-					resp := con.user_s.DeleteUser(&param)
+					resp, err := con.user_s.DeleteUser(ctx, param.ID)
+					if err != nil {
+						return err
+					}
+
 					return ng.Respond(ctx, nghttp.NewResponse(resp))
 				},
 			)
