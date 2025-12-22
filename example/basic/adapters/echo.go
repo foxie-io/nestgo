@@ -2,29 +2,30 @@ package adapters
 
 import (
 	"context"
-	"log"
-
-	"net/http"
+	"fmt"
 
 	"github.com/foxie-io/ng"
+	nghttp "github.com/foxie-io/ng/http"
 	"github.com/labstack/echo/v4"
 )
 
-func EchoResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
+func EchoResponseHandler(ctx context.Context, info nghttp.HttpResponse) error {
 	ectx := ng.MustLoad[echo.Context](ctx)
 
-	if info.HttpResponse != nil {
-		return ectx.JSON(info.HttpResponse.StatusCode(), info.HttpResponse.Response())
+	if res, ok := info.(*nghttp.Response); ok {
+		if res.Code == nghttp.CodeUnknown {
+			raw, _ := res.GetMetadata("raw")
+			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
+		}
 	}
 
-	log.Printf("no http response found in response info: raw:%v, stacks:%v", info.Raw, string(info.Stack))
-	status := http.StatusInternalServerError
-	return ectx.JSON(status, http.StatusText(status))
+	return ectx.JSON(info.StatusCode(), info.Response())
 }
 
 func EchoHandler(scopeHandler func() ng.Handler) echo.HandlerFunc {
 	return func(echoCtx echo.Context) error {
-		ctx, _ := ng.AcquireContext(echoCtx.Request().Context())
+		ctx, rc := ng.NewContext(echoCtx.Request().Context())
+		defer rc.Clear()
 
 		// store echo context
 		ng.Store(ctx, echoCtx)

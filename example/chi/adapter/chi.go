@@ -3,31 +3,34 @@ package adapter
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/foxie-io/ng"
+	nghttp "github.com/foxie-io/ng/http"
 	"github.com/go-chi/chi/v5"
 )
 
-func ChiResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
+func ChiResponseHandler(ctx context.Context, info nghttp.HttpResponse) error {
 	w := ng.MustLoad[http.ResponseWriter](ctx)
-	if info.HttpResponse != nil {
-		w.WriteHeader(info.HttpResponse.StatusCode())
-		bytes, _ := json.Marshal(info.HttpResponse.Response())
-		_, _ = w.Write(bytes)
-		return nil
+
+	if res, ok := info.(*nghttp.Response); ok {
+		if res.Code == nghttp.CodeUnknown {
+			raw, _ := res.GetMetadata("raw")
+			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
+		}
 	}
 
-	log.Printf("no http response found in response info: raw:%v, stacks:%v", info.Raw, string(info.Stack))
-	status := http.StatusInternalServerError
-	http.Error(w, http.StatusText(status), status)
+	w.WriteHeader(info.StatusCode())
+	bytes, _ := json.Marshal(info.Response())
+	_, _ = w.Write(bytes)
 	return nil
 }
 
 func ChiHandler(scopeHandler func() ng.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := ng.AcquireContext(r.Context())
+		ctx, rc := ng.NewContext(r.Context())
+		defer rc.Clear()
 
 		// store http request and response writer
 		ng.Store(ctx, w)

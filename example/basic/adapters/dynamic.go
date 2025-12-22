@@ -5,13 +5,14 @@ import (
 	"net/http"
 
 	"github.com/foxie-io/ng"
+	nghttp "github.com/foxie-io/ng/http"
 	"github.com/gofiber/fiber/v2"
 	"github.com/labstack/echo/v4"
 )
 
 type ClientIp string
 
-func DynamicResponseHandler(ctx context.Context, info *ng.ResponseInfo) error {
+func DynamicResponseHandler(ctx context.Context, info nghttp.HttpResponse) error {
 	_, err := ng.Load[echo.Context](ctx)
 	if err == nil {
 		return EchoResponseHandler(ctx, info)

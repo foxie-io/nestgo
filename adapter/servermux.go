@@ -3,25 +3,26 @@ package ngadapter
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
 )
 
-func ServeMuxResponseHandler(ctx context.Context, info *nghttp.ResponseInfo) error {
+func ServeMuxResponseHandler(ctx context.Context, info nghttp.HttpResponse) error {
 	w := ng.MustLoad[http.ResponseWriter](ctx)
-	if info.HttpResponse != nil {
-		w.WriteHeader(info.HttpResponse.StatusCode())
-		bytes, _ := json.Marshal(info.HttpResponse.Response())
-		_, _ = w.Write(bytes)
-		return nil
+
+	if res, ok := info.(*nghttp.Response); ok {
+		if res.Code == nghttp.CodeUnknown {
+			raw, _ := res.GetMetadata("raw")
+			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
+		}
 	}
 
-	log.Printf("no http response found in response info: raw:%v", info.Raw)
-	status := http.StatusInternalServerError
-	http.Error(w, http.StatusText(status), status)
+	w.WriteHeader(info.StatusCode())
+	bytes, _ := json.Marshal(info.Response())
+	_, _ = w.Write(bytes)
 	return nil
 }
 
