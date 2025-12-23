@@ -219,13 +219,13 @@ echoHttp.Start(":8081")
 
 The `examples` directory contains various subdirectories showcasing how to use the NG framework with different setups and configurations. Below is a list of available examples:
 
-- **basic/**: A simple example demonstrating the core features of the NG framework, including middleware, controllers, and adapters.
-- **advance/**: An advanced example with a more complex project structure, demonstrating controllers, middleware, guards, interceptors, adapters, data access layers, models, DTOs, and Swagger documentation.
-- **chi/**: Example using the `chi` router as the HTTP adapter.
-- **fiber/**: Example using the `fiber` framework as the HTTP adapter.
-- **fx/**: Example integrating NG with the `fx` dependency injection framework.
-- **gin/**: Example using the `gin` framework as the HTTP adapter.
-- **http/**: Example using the standard `http.ServeMux` as the HTTP adapter.
+- **[basic](examples/basic)**: A simple example demonstrating the core features of the NG framework, including middleware, controllers, and adapters.
+- **[advanced](examples/advanced)**: An advanced example with a more complex project structure, demonstrating controllers, middleware, guards, interceptors, adapters, data access layers, models, DTOs, and Swagger documentation.
+- **[chi](examples/chi)**: Example using the `chi` router as the HTTP adapter.
+- **[echo](examples/echo)**: Example using the `echo` framework as the HTTP adapter.
+- **[fiber](examples/fiber)**: Example using the `fiber` framework as the HTTP adapter.
+- **[gin/](examples/gin)**: Example using the `gin` framework as the HTTP adapter.
+- **[http/](examples/http)**: Example using the standard `http.ServeMux` as the HTTP adapter.
 
 Each example contains its own `main.go` file and supporting components, middleware, and adapters. Navigate to the respective directories to explore the code and learn how to integrate NG into your projects.
 
