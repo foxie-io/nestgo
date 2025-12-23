@@ -5,7 +5,7 @@ go 1.25.2
 replace github.com/foxie-io/ng => ./../..
 
 require (
-	github.com/foxie-io/ng v0.3.1
+	github.com/foxie-io/ng v0.3.2
 	github.com/gin-gonic/gin v1.11.0
 )
 

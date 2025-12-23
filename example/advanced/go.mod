@@ -5,7 +5,7 @@ go 1.25.2
 replace github.com/foxie-io/ng => ./../..
 
 require (
-	github.com/foxie-io/ng v0.3.1
+	github.com/foxie-io/ng v0.3.2
 	github.com/swaggo/swag/v2 v2.0.0-rc4
 	go.uber.org/fx v1.24.0
 	gorm.io/gorm v1.31.1
