@@ -38,25 +38,23 @@ type (
 		MetadataKey string
 	}
 
-	// ClientData holds the rate limit data for a specific client.
-	ClientData struct {
-		// ID is the unique identifier for the client.
-		ID string
+	// clientData holds the rate limit data for a specific client.
+	clientData struct {
 
-		// ReqCounts is the number of requests made by the client in the current window.
-		ReqCounts int
+		// reqs is the number of requests made by the client in the current window.
+		reqs int
 
-		// ResetAt is the time when the rate limit window resets.
-		ResetAt time.Time
+		// resetAt is the time when the rate limit window resets.
+		resetAt time.Time
 
-		// Limit is the maximum number of requests allowed in the window.
-		Limit int
+		// limit is the maximum number of requests allowed in the window.
+		limit int
 	}
 
 	// Guard is the rate limiting middleware.
 	Guard struct {
 		ng.DefaultID[Guard]
-		clients map[string]*ClientData
+		clients map[string]*clientData
 		mutex   sync.RWMutex
 		config  *Config
 	}
@@ -82,7 +80,7 @@ func New(config *Config) *Guard {
 
 	guard := &Guard{
 		config:  overrideOptional(config, DefaultConfig),
-		clients: make(map[string]*ClientData),
+		clients: make(map[string]*clientData),
 	}
 
 	guard.startCleanup(time.Minute)
@@ -109,34 +107,31 @@ func (g *Guard) Allow(ctx context.Context) error {
 	client, exists := g.clients[id]
 
 	// If the client does not exist or their rate limit window has expired, reset their data
-	if !exists || now.After(client.ResetAt) {
-		client = &ClientData{
-			ID:        id,
-			Limit:     config.Limit,
-			ReqCounts: 1,
-			ResetAt:   now.Add(config.Window),
+	if !exists || now.After(client.resetAt) {
+		client = &clientData{
+			limit:   config.Limit,
+			reqs:    1,
+			resetAt: now.Add(config.Window),
 		}
 		g.clients[id] = client
 	} else {
-		client.ReqCounts++
+		client.reqs++
 	}
 
 	// Set rate limit headers
 	if config.SetHeaderHandler != nil {
-		remaining := client.Limit - client.ReqCounts
+		remaining := client.limit - client.reqs
 		if remaining < 0 {
 			remaining = 0
 		}
-		config.SetHeaderHandler(ctx, "X-RateLimit-Limit", fmt.Sprintf("%d", client.Limit))
-		config.SetHeaderHandler(ctx, "X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
-		config.SetHeaderHandler(ctx, "X-RateLimit-Reset", client.ResetAt.Format(time.RFC3339))
+		config.SetHeaderHandler(ctx, "Limit", fmt.Sprintf("%d", client.limit))
+		config.SetHeaderHandler(ctx, "Remaining", fmt.Sprintf("%d", remaining))
+		config.SetHeaderHandler(ctx, "Reset", client.resetAt.Format(time.RFC3339))
 	}
 
-	hasReachedLimit := client.ReqCounts > config.Limit
-	ng.Store(ctx, client)
-
+	hasReachedLimit := client.reqs > config.Limit
 	if hasReachedLimit {
-		client.ReqCounts--
+		client.reqs--
 		return config.ErrorHandler(ctx)
 	}
 
@@ -150,7 +145,7 @@ func (g *Guard) cleanupExpiredClients() {
 
 	now := time.Now()
 	for id, client := range g.clients {
-		if now.After(client.ResetAt) {
+		if now.After(client.resetAt) {
 			delete(g.clients, id)
 		}
 	}
@@ -189,6 +184,10 @@ func overrideOptional(config *Config, defaultConfig *Config) *Config {
 
 	if config.MetadataKey == "" {
 		config.MetadataKey = defaultConfig.MetadataKey
+	}
+
+	if config.SetHeaderHandler == nil {
+		config.SetHeaderHandler = defaultConfig.SetHeaderHandler
 	}
 
 	return config

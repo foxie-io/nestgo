@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -32,7 +31,7 @@ func createGlobalGuard() *ratelimit.Guard {
 		},
 		SetHeaderHandler: func(ctx context.Context, key, value string) {
 			w := ng.MustLoad[http.ResponseWriter](ctx)
-			key = strings.Replace(key, "X-RateLimit", "X-G-RateLimit", 1)
+			key = fmt.Sprintf("X-G-RateLimit-%s", key)
 			w.Header().Set(key, value)
 		},
 		MetadataKey: GLOBAL,
@@ -54,6 +53,7 @@ func createPerRouteGuard() *ratelimit.Guard {
 		},
 		SetHeaderHandler: func(ctx context.Context, key, value string) {
 			w := ng.MustLoad[http.ResponseWriter](ctx)
+			key = fmt.Sprintf("X-RateLimit-%s", key)
 			w.Header().Set(key, value)
 		},
 		MetadataKey: PER_ROUTE,
