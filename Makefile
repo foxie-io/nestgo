@@ -35,7 +35,5 @@ benchmark: ## Run benchmarks
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-gopublish:
+go.pub:
 	GOPROXY=proxy.golang.org go list -m github.com/foxie-io/ng@${PKG_VERSION}
-
-publish: push.tag gopublish
