@@ -82,7 +82,7 @@ func (r *route) addPreCore(preCores ...Core) Route {
 
 		// merge metadata
 		core.metadata.Range(func(key, value any) bool {
-			r.core.metadata.Store(key, value)
+			r.core.metadata.LoadOrStore(key, value)
 			return true
 		})
 
