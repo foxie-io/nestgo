@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"example/advanced/adapter"
-	"example/advanced/components/orders"
-	"example/advanced/components/users"
 	"example/advanced/dal"
+	"example/advanced/features/orders"
+	"example/advanced/features/users"
 	"example/advanced/models"
 	"example/advanced/router"
 

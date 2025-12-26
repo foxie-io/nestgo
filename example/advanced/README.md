@@ -1,6 +1,6 @@
 # Advanced Example for NG Framework
 
-This directory contains an advanced example of using the NG framework. It demonstrates how to structure a complex application with multiple components, middleware, guards, interceptors, and adapters.
+This directory contains an advanced example of using the NG framework. It demonstrates how to structure a complex application with multiple features, middleware, guards, interceptors, and adapters.
 
 ## Project Structure
 
@@ -12,7 +12,7 @@ example/advance/
 │   └── reqs/                    # Request-related utilities
 │       ├── binder.go            # Custom request binder
 │       └── validator.go         # Custom request validator
-├── components/                  # Application components (modules)
+├── features/                  # Application features (modules)
 │   ├── orders/                  # Orders module
 │   │   ├── order.controller.go  # Controller for order-related routes
 │   │   ├── order.module.go      # Module definition for orders
@@ -110,7 +110,7 @@ This example requires the following dependencies:
 
 3. Access the application:
    - API endpoints: `http://localhost:8080`
-   - Swagger documentation: `http://localhost:8080/swagger`
+   - Swagger documentation: `http://localhost:8080/docs`
 
 ## Learn More
 

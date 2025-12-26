@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
@@ -12,13 +13,18 @@ import (
 func FiberResponseHandler(ctx context.Context, info nghttp.HTTPResponse) error {
 	fctx := ng.MustLoad[*fiber.Ctx](ctx)
 
-	if res, ok := info.(*nghttp.Response); ok {
-		if res.Code == nghttp.CodeUnknown {
-			raw, _ := res.GetMetadata("raw")
-			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
-		}
+	switch val := info.(type) {
+	case *nghttp.RawResponse:
+		return fctx.Status(val.StatusCode()).SendString(string(val.Value()))
+	case *nghttp.Response:
+		return fctx.Status(val.StatusCode()).JSON(val.Response())
+	case *nghttp.PanicError:
+		fmt.Println("Unknown response type:", fmt.Sprintf("%T, value: %v", info, val.Value()), string(debug.Stack()))
+		fctx.Status(info.StatusCode()).JSON(info.Response())
+		return nil
 	}
 
+	fmt.Println("Unknown response type:", fmt.Sprintf("%T", info), string(debug.Stack()))
 	return fctx.Status(info.StatusCode()).JSON(info.Response())
 }
 

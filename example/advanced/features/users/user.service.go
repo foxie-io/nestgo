@@ -3,8 +3,8 @@ package users
 import (
 	"context"
 	"errors"
-	"example/advanced/components/users/dtos"
 	"example/advanced/dal"
+	"example/advanced/features/users/dtos"
 	"example/advanced/models"
 	"sync"
 

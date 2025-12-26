@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
@@ -12,13 +13,21 @@ import (
 func GinResponseHandler(ctx context.Context, info nghttp.HTTPResponse) error {
 	ginctx := ng.MustLoad[*gin.Context](ctx)
 
-	if res, ok := info.(*nghttp.Response); ok {
-		if res.Code == nghttp.CodeUnknown {
-			raw, _ := res.GetMetadata("raw")
-			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
-		}
+	switch val := info.(type) {
+	case *nghttp.RawResponse:
+		ginctx.Writer.WriteHeader(val.StatusCode())
+		ginctx.Writer.Write(val.Value())
+		return nil
+	case *nghttp.Response:
+		ginctx.JSON(info.StatusCode(), info.Response())
+		return nil
+	case *nghttp.PanicError:
+		fmt.Println("Unknown response type:", fmt.Sprintf("%T, value: %v", info, val.Value()), string(debug.Stack()))
+		ginctx.JSON(info.StatusCode(), info.Response())
+		return nil
 	}
 
+	fmt.Println("Unknown response type:", fmt.Sprintf("%T", info), string(debug.Stack()))
 	ginctx.JSON(info.StatusCode(), info.Response())
 	return nil
 }

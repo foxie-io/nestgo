@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
@@ -12,17 +13,28 @@ import (
 
 func ServeMuxResponseHandler(ctx context.Context, info nghttp.HTTPResponse) error {
 	w := ng.MustLoad[http.ResponseWriter](ctx)
+	w.WriteHeader(info.StatusCode())
 
-	if res, ok := info.(*nghttp.Response); ok {
-		if res.Code == nghttp.CodeUnknown {
-			raw, _ := res.GetMetadata("raw")
-			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
-		}
+	switch val := info.(type) {
+	case *nghttp.RawResponse:
+		_, err := w.Write(val.Value())
+		return err
+
+	case *nghttp.Response:
+		jsonbytes, _ := json.Marshal(info.Response())
+		_, err := w.Write(jsonbytes)
+		return err
+
+	case *nghttp.PanicError:
+		fmt.Println("Unknown response type:", fmt.Sprintf("%T, value: %v", info, val.Value()), string(debug.Stack()))
+		jsonbytes, _ := json.Marshal(info.Response())
+		_, err := w.Write(jsonbytes)
+		return err
 	}
 
-	w.WriteHeader(info.StatusCode())
-	bytes, _ := json.Marshal(info.Response())
-	_, _ = w.Write(bytes)
+	fmt.Println("Unknown response type:", fmt.Sprintf("%T, info", info), string(debug.Stack()))
+	jsonbytes, _ := json.Marshal(info.Response())
+	_, _ = w.Write(jsonbytes)
 	return nil
 }
 

@@ -63,13 +63,15 @@ func (su *SwaggerDocs) UI() ng.Route {
 
 	return ng.NewRoute("GET", "/docs",
 		ng.WithHandler(func(ctx context.Context) error {
-			ng.Respond(ctx, su)
-			return nil
+			// can return as HTML response, because su implements nghttp.HTTPResponse
+			return ng.Respond(ctx, su)
 		}),
-		// custom response handler to serve HTML
+
+		// override response handler to serve HTML
 		ng.WithResponseHandler(func(ctx context.Context, info nghttp.HTTPResponse) error {
 			c := ng.MustLoad[echo.Context](ctx)
 
+			// retrieve SwaggerDocs from response
 			resp, ok := info.(*SwaggerDocs)
 			if !ok {
 				return c.String(500, "invalid response type")

@@ -3,7 +3,7 @@ package users
 import (
 	"context"
 	"example/advanced/adapter/reqs"
-	"example/advanced/components/users/dtos"
+	"example/advanced/features/users/dtos"
 
 	"net/http"
 

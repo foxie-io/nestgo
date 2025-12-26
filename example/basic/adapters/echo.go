@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/foxie-io/ng"
 	nghttp "github.com/foxie-io/ng/http"
@@ -12,14 +13,21 @@ import (
 func EchoResponseHandler(ctx context.Context, info nghttp.HTTPResponse) error {
 	ectx := ng.MustLoad[echo.Context](ctx)
 
-	if res, ok := info.(*nghttp.Response); ok {
-		if res.Code == nghttp.CodeUnknown {
-			raw, _ := res.GetMetadata("raw")
-			res.Update(nghttp.Meta("error", fmt.Sprintf("%v", raw)))
-		}
+	switch val := info.(type) {
+	case *nghttp.RawResponse:
+		return ectx.String(val.StatusCode(), string(val.Value()))
+
+	case *nghttp.Response:
+		return ectx.JSON(val.StatusCode(), val.Response())
+
+	case *nghttp.PanicError:
+		fmt.Println("Unknown response type:", fmt.Sprintf("%T, value: %v", info, val.Value()), string(debug.Stack()))
+		return ectx.JSON(val.StatusCode(), val.Response())
 	}
 
-	return ectx.JSON(info.StatusCode(), info.Response())
+	fmt.Println("Unknown response type:", fmt.Sprintf("%T", info), string(debug.Stack()))
+	resp := nghttp.NewErrUnknown()
+	return ectx.JSON(resp.StatusCode(), resp.Response())
 }
 
 func EchoHandler(scopeHandler func() ng.Handler) echo.HandlerFunc {

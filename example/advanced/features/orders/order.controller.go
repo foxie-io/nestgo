@@ -3,7 +3,7 @@ package orders
 import (
 	"context"
 	"example/advanced/adapter/reqs"
-	"example/advanced/components/orders/dtos"
+	"example/advanced/features/orders/dtos"
 
 	"net/http"
 
@@ -140,8 +140,8 @@ func (con *OrderController) Update() ng.Route {
 			)
 
 			return ng.Handle(
-				reqs.BindParam(&param), reqs.BindBody(&body),
-				reqs.Validate(&param), reqs.Validate(&body),
+				reqs.BindParam(&param), reqs.Validate(&param),
+				reqs.BindBody(&body), reqs.Validate(&body),
 				func(ctx context.Context) error {
 					resp, err := con.order_s.UpdateOrder(ctx, param.ID, &body)
 					if err != nil {

@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"example/basic/adapters"
-	"example/basic/components/orders"
-	"example/basic/components/users"
+	"example/basic/features/orders"
+	"example/basic/features/users"
+	"fmt"
+
 	"example/basic/middlewares"
 	"example/basic/middlewares/limiter"
 	"time"
@@ -95,6 +97,14 @@ func main() {
 	adapters.ServeMuxRegisterRoutes(app, muxHttp)
 	adapters.EchoRegisterRoutes(app, echoHttp)
 	adapters.FiberRegisterRoutes(app, fiberHttp)
+
+	time.AfterFunc(time.Second, func() {
+		fmt.Println("Stats available at:")
+		fmt.Println("http://localhost:8080/stats")
+		fmt.Println("http://localhost:8081/stats")
+		fmt.Println("http://localhost:8082/stats")
+
+	})
 
 	go http.ListenAndServe(":8080", muxHttp)
 	go echoHttp.Start(":8081")
